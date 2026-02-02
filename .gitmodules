@@ -5,3 +5,6 @@
 [submodule "easy_handeye2"]
 	path = easy_handeye2
 	url = git@github.com:marcoesposito1988/easy_handeye2.git
+[submodule "mecheye_ros2_interface"]
+	path = mecheye_ros2_interface
+	url = git@github.com:MechMindRobotics/mecheye_ros2_interface.git
