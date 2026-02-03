@@ -4,3 +4,7 @@
 [submodule "mecheye_ros2_interface"]
 	path = mecheye_ros2_interface
 	url = git@github.com:MechMindRobotics/mecheye_ros2_interface.git
+[submodule "Universal_Robots_ROS2_Driver"]
+	path = Universal_Robots_ROS2_Driver
+	url = git@github.com:Prottay-Roy-Chowdhury/Universal_Robots_ROS2_Driver.git
+	branch = jazzy
