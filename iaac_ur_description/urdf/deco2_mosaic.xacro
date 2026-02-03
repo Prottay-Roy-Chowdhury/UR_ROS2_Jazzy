@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="ur_with_ee">
+
+  <!-- Load original robot -->
+  <xacro:arg name="name" default="ur" />
+  <xacro:arg name="ur_type" default="ur10e" />
+  <xacro:arg name="sim_gazebo" default="false" />
+  <xacro:arg name="sim_ignition" default="false" />
+
+  <!-- Include base robot definition -->
+  <xacro:include filename="$(find ur_description)/urdf/ur.urdf.xacro"/>
+  
+  <link name="tcp_ee"/>
+
+  <joint name="deco2_ee" type="fixed">
+    <parent link="tool0"/>
+    <child link="tcp_ee"/>
+    <origin xyz="0.00312 0.00186 0.13315" rpy="0 0 0"/> <!-- TCP location -->
+  </joint>  
+
+  <!-- Add end-effector frame -->
+  <link name="suction_cup_frame">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 -1.5708"/>
+      <geometry>
+        <!-- <box size="0.02 0.02 0.02"/>  -->
+        <mesh filename="package://iaac_ur_description/meshes/deco2/deco2_ee_vi.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="placeholder_grey">
+        <color rgba="0.851 0.439 0.106 0.8"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 -1.5708"/>
+      <geometry>
+        <!-- <box size="0.02 0.02 0.02"/>  -->
+        <mesh filename="package://iaac_ur_description/meshes/deco2/deco2_ee_co.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="vaccum_gripper" type="fixed">
+    <parent link="tcp_ee"/> <!-- Attach to the end-effector -->
+    <child link="suction_cup_frame"/>
+    <origin xyz="-0.00312 -0.00186 -0.13315" rpy="0 0 0"/> <!-- adjust this to position the EE correctly -->
+  </joint>
+
+  <link name="camera_color_optical_frame"/>
+
+  <joint name="camera_link" type="fixed">
+    <parent link="tool0"/>  <!-- or "tcp_ee" if camera is mounted on EE -->
+    <child link="camera_color_optical_frame"/>
+    <origin xyz="0.087143 -0.104806 0.030877" rpy="-0.0058639 0.0005677 -0.0074144"/>
+  </joint>
+
+</robot>
