@@ -5,9 +5,9 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
-from launch_ros.substitutions import FindPackageShare
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
@@ -37,7 +37,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             "description_file",
             default_value="deco2_mosaic.xacro",
-            description="URDF description file of the robot.",
+            description="URDF/Xacro description file of the robot.",
         ),
     ]
 
@@ -46,11 +46,18 @@ def generate_launch_description():
     initial_joint_controller = LaunchConfiguration("initial_joint_controller")
     ur_description_package = LaunchConfiguration("description_package")
     description_file = LaunchConfiguration("description_file")
-    # pipeline = LaunchConfiguration("pipeline")
 
-    # Define the path to the UR launch file
+    # Build an absolute path to the xacro so the UR driver can always find it
+    # (Fixes Jazzy where the included launch may call xacro with a relative filename.)
+    description_file_path = PathJoinSubstitution(
+        [FindPackageShare(ur_description_package), "urdf", description_file]
+    )
+
+    # Define the path to the UR and MoveIt launch files
     ur_bringup_launch_file = os.path.join(
-        FindPackageShare("ur_robot_driver").find("ur_robot_driver"), "launch", "ur10e.launch.py"
+        FindPackageShare("ur_robot_driver").find("ur_robot_driver"),
+        "launch",
+        "ur10e.launch.py",
     )
 
     moveit_launch_file = os.path.join(
@@ -60,33 +67,42 @@ def generate_launch_description():
     )
 
     # Define the arguments for both simulation and real robot modes
+    # Note: Jazzy UR driver uses use_mock_hardware/mock_sensor_commands (not use_fake_hardware/fake_sensor_commands).
     sim_arguments = {
         "initial_joint_controller": initial_joint_controller,
-        "robot_ip": "xxx.xxx.xxx",
-        "use_fake_hardware": "true",
-        "fake_sensor_commands": "true",
+        "robot_ip": "0.0.0.0",
+        "use_mock_hardware": "true",
+        "mock_sensor_commands": "true",
         "activate_joint_controller": "true",
         "launch_rviz": "false",
         "description_package": ur_description_package,
-        "description_file": description_file,
+        "description_file": description_file_path,
     }
 
     real_robot_arguments = {
         "initial_joint_controller": initial_joint_controller,
         "robot_ip": "192.168.56.101",
-        "use_fake_hardware": "false",
-        "fake_sensor_commands": "false",
+        "use_mock_hardware": "false",
+        "mock_sensor_commands": "false",
         "activate_joint_controller": "true",
         "launch_rviz": "false",
         "description_package": ur_description_package,
-        "description_file": description_file,
+        "description_file": description_file_path,
     }
 
     moveit_arguments = {
         "ur_type": "ur10e",
         "description_package": ur_description_package,
-        "description_file": description_file,
+        "description_file": description_file_path,
     }
+
+    # moveit_arguments = {
+    #     "ur_type": "ur10e",
+    #     "launch_rviz": "true",          # or true if you want
+    #     "use_sim_time": sim,             # makes MoveIt follow sim clock if sim:=true
+    #     "launch_servo": "false",         # optional
+    # }
+
 
     # Define the IncludeLaunchDescription with conditional arguments
     ur_bringup_launch = GroupAction(
@@ -118,24 +134,6 @@ def generate_launch_description():
         output="screen",
     )
 
-    # # add static transfrorm publisher for camera to base link with quaternion
-    # static_transform_publisher = Node(
-    #     package="tf2_ros",
-    #     executable="static_transform_publisher",
-    #     name="camera_to_base_link_publisher",
-    #     output="screen",
-    #     arguments=[
-    #         "0.096507",  # x
-    #         "-0.087104",  # y
-    #         "0.017135",  # z
-    #         "0.035378",  # qx
-    #         "0.002747",  # qy
-    #         "-0.008516",  # qz
-    #         "0.999334",  # qw
-    #         "tool0",  # parent frame
-    #         "camera_color_optical_frame",  # child frame
-    #     ],
-    # )
     # Return the full launch description
     return LaunchDescription(
         declared_arguments + [ur_bringup_launch, moveit_launch, visualize_pose_srv_node]

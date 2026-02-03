@@ -43,8 +43,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends\
     mesa-vulkan-drivers \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# venv support for Ubuntu 24.04 (PEP 668)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-venv python3-full \
+    && rm -rf /var/lib/apt/lists/*
+
+# create venv and install python deps there
+ENV VENV_PATH=/opt/venv
+RUN python3 -m venv $VENV_PATH
+ENV PATH="$VENV_PATH/bin:$PATH"
+
 RUN pip3 install --upgrade pip setuptools wheel && \
     pip3 install --no-cache-dir --ignore-installed \
+    catkin-pkg \
+    empy \
+    lark \
     ruff \
     black \
     numpy \
@@ -122,11 +135,13 @@ FROM build AS bash
 RUN sed -i 's|<origin xyz="0 0 0" rpy="0 0 0" /> *<!-- position robot in the world -->|<origin xyz="0 0 0" rpy="0 0 -3.141592653589793" />|' /opt/ros/jazzy/share/ur_description/urdf/ur.urdf.xacro
 
 # RUN sed -i 's/\(\s*\)_Bool,/\1BoolType,/' /opt/mech-mind/mech-eye-sdk/include/Parameter.h
-# RUN sed -i '/<command_interface name="effort"\/>/d' \
-#     /opt/ros/jazzy/share/ur_description/urdf/ur.ros2_control.xacro
+RUN sed -i '/<command_interface name="effort"\/>/d' \
+    /opt/ros/jazzy/share/ur_description/urdf/ur.ros2_control.xacro
 
 RUN ["/bin/bash", "-c", "source /opt/ros/$ROS_DISTRO/setup.bash && \
-     colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release"] 
+     colcon build --symlink-install \
+       --packages-skip mecheye_ros_interface mecheye_ros2_interface \
+       --cmake-args -DCMAKE_BUILD_TYPE=Release"]
 RUN ["/bin/bash", "-c", "cp /dev_ws/src/.docker/setup.bash /dev_ws/setup.bash && chmod 777 /dev_ws/setup.bash"]
 RUN ["/bin/bash", "-c", "cp /dev_ws/src/.docker/entrypoint.bash / && chmod 777 /entrypoint.bash"]
 
@@ -138,13 +153,15 @@ FROM build AS zsh
 
 RUN sed -i 's|<origin xyz="0 0 0" rpy="0 0 0" /> *<!-- position robot in the world -->|<origin xyz="0 0 0" rpy="0 0 -3.141592653589793" />|' /opt/ros/jazzy/share/ur_description/urdf/ur.urdf.xacro
 
-# RUN sed -i '/<command_interface name="effort"\/>/d' \
-#     /opt/ros/jazzy/share/ur_description/urdf/ur.ros2_control.xacro
+RUN sed -i '/<command_interface name="effort"\/>/d' \
+    /opt/ros/jazzy/share/ur_description/urdf/ur.ros2_control.xacro
 
 SHELL ["zsh", "chsh -s ~/.zshrc" ]
 
 RUN ["/bin/zsh", "-c", "source /opt/ros/$ROS_DISTRO/setup.sh && \
-     colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release"]
+     colcon build --symlink-install \
+       --packages-skip mecheye_ros_interface mecheye_ros2_interface \
+       --cmake-args -DCMAKE_BUILD_TYPE=Release"]
 RUN ["/bin/zsh", "-c", "cp /dev_ws/src/.docker/setup.zsh /dev_ws/setup.zsh && chmod 777 /dev_ws/setup.zsh"]
 RUN ["/bin/zsh", "-c", "cp /dev_ws/src/.docker/entrypoint.zsh / && chmod 777 /entrypoint.zsh"]  
 
