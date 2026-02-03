@@ -105,20 +105,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # niceness permissions (for ur driver use without Prempt-RT)
 RUN echo "* - nice -15" >> /etc/security/limits.conf
 
-FROM base AS camera
+# FROM base AS camera
 
-RUN curl -ssL -o Mech-Eye_API_2.5.1_amd64.zip "https://cdn-obj.azureedge.net/community/community_downloads/community_downloads/Mech-Eye_API_2.5.1_amd64.zip?se=4763-06-18T07%3A27%3A08Z&sp=r&sv=2023-11-03&sr=b&sig=T%2BnKM9Q6gze19THtJQmOo/aaJmi2CzRoYB6L1XYmoHg%3D" \
-    && unzip Mech-Eye_API_2.5.1_amd64.zip \
-    && rm Mech-Eye_API_2.5.1_amd64.zip \
-    && dpkg -i 'Mech-Eye_API_2.5.1_amd64.deb' \
-    && dpkg -l | grep mecheyeapi \
-    && rm -rf 'Mech-Eye_API_2.5.1_amd64.deb'
-
-
-RUN pip3 install --no-cache-dir open3d --ignore-installed PyYAML
+# RUN curl -ssL -o Mech-Eye_API_2.5.1_amd64.zip "https://cdn-obj.azureedge.net/community/community_downloads/community_downloads/Mech-Eye_API_2.5.1_amd64.zip?se=4763-06-18T07%3A27%3A08Z&sp=r&sv=2023-11-03&sr=b&sig=T%2BnKM9Q6gze19THtJQmOo/aaJmi2CzRoYB6L1XYmoHg%3D" \
+#     && unzip Mech-Eye_API_2.5.1_amd64.zip \
+#     && rm Mech-Eye_API_2.5.1_amd64.zip \
+#     && dpkg -i 'Mech-Eye_API_2.5.1_amd64.deb' \
+#     && dpkg -l | grep mecheyeapi \
+#     && rm -rf 'Mech-Eye_API_2.5.1_amd64.deb'
 
 
-FROM camera AS build
+# RUN pip3 install --no-cache-dir open3d --ignore-installed PyYAML
+
+
+# FROM camera AS build
+
+FROM base AS build
 
 RUN mkdir -p /dev_ws/src
 WORKDIR /dev_ws/src 
@@ -135,13 +137,11 @@ FROM build AS bash
 RUN sed -i 's|<origin xyz="0 0 0" rpy="0 0 0" /> *<!-- position robot in the world -->|<origin xyz="0 0 0" rpy="0 0 -3.141592653589793" />|' /opt/ros/jazzy/share/ur_description/urdf/ur.urdf.xacro
 
 # RUN sed -i 's/\(\s*\)_Bool,/\1BoolType,/' /opt/mech-mind/mech-eye-sdk/include/Parameter.h
-RUN sed -i '/<command_interface name="effort"\/>/d' \
-    /opt/ros/jazzy/share/ur_description/urdf/ur.ros2_control.xacro
+# RUN sed -i '/<command_interface name="effort"\/>/d' \
+#     /opt/ros/jazzy/share/ur_description/urdf/ur.ros2_control.xacro
 
 RUN ["/bin/bash", "-c", "source /opt/ros/$ROS_DISTRO/setup.bash && \
-     colcon build --symlink-install \
-       --packages-skip mecheye_ros_interface mecheye_ros2_interface \
-       --cmake-args -DCMAKE_BUILD_TYPE=Release"]
+     colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release"]
 RUN ["/bin/bash", "-c", "cp /dev_ws/src/.docker/setup.bash /dev_ws/setup.bash && chmod 777 /dev_ws/setup.bash"]
 RUN ["/bin/bash", "-c", "cp /dev_ws/src/.docker/entrypoint.bash / && chmod 777 /entrypoint.bash"]
 
@@ -153,15 +153,13 @@ FROM build AS zsh
 
 RUN sed -i 's|<origin xyz="0 0 0" rpy="0 0 0" /> *<!-- position robot in the world -->|<origin xyz="0 0 0" rpy="0 0 -3.141592653589793" />|' /opt/ros/jazzy/share/ur_description/urdf/ur.urdf.xacro
 
-RUN sed -i '/<command_interface name="effort"\/>/d' \
-    /opt/ros/jazzy/share/ur_description/urdf/ur.ros2_control.xacro
+# RUN sed -i '/<command_interface name="effort"\/>/d' \
+#     /opt/ros/jazzy/share/ur_description/urdf/ur.ros2_control.xacro
 
 SHELL ["zsh", "chsh -s ~/.zshrc" ]
 
 RUN ["/bin/zsh", "-c", "source /opt/ros/$ROS_DISTRO/setup.sh && \
-     colcon build --symlink-install \
-       --packages-skip mecheye_ros_interface mecheye_ros2_interface \
-       --cmake-args -DCMAKE_BUILD_TYPE=Release"]
+     colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release"]
 RUN ["/bin/zsh", "-c", "cp /dev_ws/src/.docker/setup.zsh /dev_ws/setup.zsh && chmod 777 /dev_ws/setup.zsh"]
 RUN ["/bin/zsh", "-c", "cp /dev_ws/src/.docker/entrypoint.zsh / && chmod 777 /entrypoint.zsh"]  
 
