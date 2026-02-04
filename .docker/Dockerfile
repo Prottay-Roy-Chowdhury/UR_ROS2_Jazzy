@@ -66,7 +66,9 @@ RUN pip3 install --upgrade pip setuptools wheel && \
     matplotlib \
     setuptools \
     rerun-sdk \
-    rosbags
+    rosbags \
+    jupyterlab \
+    ipykernel
     
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-$ROS_DISTRO-rqt \

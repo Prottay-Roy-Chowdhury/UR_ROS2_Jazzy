@@ -8,7 +8,7 @@
   <xacro:arg name="sim_ignition" default="false" />
 
   <!-- Include base robot definition -->
-  <xacro:include filename="$(find ur_description)/urdf/ur.urdf.xacro"/>
+  <xacro:include filename="$(find ur_robot_driver)/urdf/ur.urdf.xacro"/>
   
   <link name="tcp_ee"/>
 
