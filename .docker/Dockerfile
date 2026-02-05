@@ -61,6 +61,7 @@ RUN pip3 install --upgrade pip setuptools wheel && \
     ruff \
     black \
     numpy \
+    scipy \
     opencv-python \
     pandas \
     matplotlib \
