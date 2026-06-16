@@ -143,6 +143,10 @@ RUN sed -i 's|<origin xyz="0 0 0" rpy="0 0 0" /> *<!-- position robot in the wor
 # RUN sed -i '/<command_interface name="effort"\/>/d' \
 #     /opt/ros/jazzy/share/ur_description/urdf/ur.ros2_control.xacro
 
+# Force-install the compatible version of empy in your active python environment
+RUN /opt/venv/bin/pip uninstall -y em empy && \
+    /opt/venv/bin/pip install "empy==3.3.4"
+
 RUN ["/bin/bash", "-c", "source /opt/ros/$ROS_DISTRO/setup.bash && \
      colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release"]
 RUN ["/bin/bash", "-c", "cp /dev_ws/src/.docker/setup.bash /dev_ws/setup.bash && chmod 777 /dev_ws/setup.bash"]
